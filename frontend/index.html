@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SpamShield AI</title>
+<style>
+
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+video#bg-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+    filter: brightness(50%); 
+}
+
+
+.container {
+    color: rgb(38, 178, 38);
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    padding: 30px 20px;
+    max-width: 600px;
+    margin: 50px auto;
+    background: rgba(41, 49, 42, 0.85);
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+}
+
+textarea { 
+    width: 97%; 
+    height: 100px; 
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #08e200;
+    resize: vertical;
+    font-size: 16px;
+    background-color: rgba(255,255,255,0.1);
+    color: #e6e6e6;
+}
+
+button { 
+    display: block;
+    margin: 20px auto 0;
+    padding: 10px 25px; 
+    border: none;
+    border-radius: 5px;
+    background-color: #60cc6f;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background-color: #21bb1c;
+}
+
+#result { 
+    margin-top: 20px; 
+    font-weight: bold; 
+    font-size: 18px;
+}
+</style>
+</head>
+<body>
+
+
+<video id="bg-video" autoplay muted loop>
+    <source src="bg.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
+
+<div class="container">
+    <h1><big><b>Spam Box 🔍</b></big></h1>
+    <h3 style="text-align: left; color:#84a087; font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;">
+        Please enter your mail/sms:
+    </h3>
+    <textarea id="email" placeholder="Paste email content here"></textarea><br>
+    <button onclick="checkSpam()">Check Spam</button>
+    <div id="result"></div>
+</div>
+
+<script>
+async function checkSpam() {
+  const emailText = document.getElementById("email").value;
+  const resultDiv = document.getElementById("result");
+
+  if (!emailText.trim()) {
+    resultDiv.innerText = "⚠️ Please enter some text.";
+    resultDiv.style.color = "orange";
+    return;
+  }
+
+  resultDiv.innerText = "🔍 Checking...";
+  resultDiv.style.color = "white";
+
+  try {
+    const res = await fetch("http://127.0.0.1:5000/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: emailText }),
+    });
+
+    const data = await res.json();
+
+    if (data.prediction) {
+      const color = data.prediction.toLowerCase() === "spam" ? "red" : "lime";
+      resultDiv.innerHTML = `✅ <strong>Prediction:</strong> <span style="color:${color}">${data.prediction}</span> <br> 💡 <strong>Confidence:</strong> ${data.confidence}%`;
+      resultDiv.style.color = color;
+    } else {
+      resultDiv.innerText = `⚠️ Error: ${data.error}`;
+      resultDiv.style.color = "orange";
+    }
+  } catch (error) {
+    resultDiv.innerText = "❌ Server not reachable. Check if Flask backend is running!";
+    resultDiv.style.color = "red";
+    console.error(error);
+  }
+}
+</script>
+
+</body>
+</html>
